@@ -1,0 +1,15 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build for simulator"
+  lane :build do
+    xcodebuild(
+      workspace: "Runner.xcworkspace",
+      scheme: "Runner",
+      sdk: "iphonesimulator",
+      configuration: "Debug",
+      derivedDataPath: "../build/ios",
+      xcargs: "CODE_SIGN_IDENTITY='' CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+end

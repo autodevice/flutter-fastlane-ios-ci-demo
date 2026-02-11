@@ -1,0 +1,43 @@
+name: Build & Upload to AutoDevice
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.4'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Build with Fastlane
+        working-directory: ios
+        run: bundle exec fastlane ios build
+
+      - name: Upload to AutoDevice
+        run: |
+          APP_PATH=$(find build -name "*.app" -type d | head -1)
+          curl -X POST "https://api.autodevice.io/v1/builds" \
+            -H "Authorization: Bearer ${{ secrets.AUTODEVICE_API_KEY }}" \
+            -F "file=@${APP_PATH}" \
+            -F "platform=ios"
